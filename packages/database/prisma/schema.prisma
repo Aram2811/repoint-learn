@@ -1,0 +1,23 @@
+// این فایل قلب لایه‌ی دیتابیس پروژه‌ست.
+// در همین گام (Sprint 1) فقط یک مدل ساده می‌گذاریم تا مسیر
+// Prisma <-> PostgreSQL <-> NestJS رو تست کنیم.
+// طراحی کامل دیتابیس (Users, Courses, Videos, ConsultationRequests و...)
+// در گام بعدی به‌صورت مستند و با توضیح کامل اضافه می‌شه.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model HealthCheck {
+  id        String   @id @default(uuid())
+  status    String   @default("ok")
+  checkedAt DateTime @default(now())
+
+  @@map("health_checks")
+}
