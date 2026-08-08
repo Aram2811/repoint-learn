@@ -1,8 +1,16 @@
-// این فایل قلب لایه‌ی دیتابیس پروژه‌ست.
-// در همین گام (Sprint 1) فقط یک مدل ساده می‌گذاریم تا مسیر
-// Prisma <-> PostgreSQL <-> NestJS رو تست کنیم.
-// طراحی کامل دیتابیس (Users, Courses, Videos, ConsultationRequests و...)
-// در گام بعدی به‌صورت مستند و با توضیح کامل اضافه می‌شه.
+// ============================================================
+// REPOINT LEARN — Prisma Database Schema
+// Sprint 2: Full domain model
+// ============================================================
+//
+// سه دامنه‌ی اصلی:
+//   1. Auth   — کاربران، نقش‌ها، OTP، توکن‌های refresh
+//   2. Content — دسته‌بندی، دوره، فصل، درس، رسانه
+//   3. Activity — تاریخچه، بوکمارک، مشاوره، لاگ، تنظیمات
+//
+// اصل طراحی: هر فیلد یا مستقیماً ضروریه یا یه رابطه‌ی Foreign Key داره.
+// هیچ داده‌ای تکراری (Denormalized) نمی‌ذاریم مگر اینکه دلیل Performance
+// واضحی داشته باشیم — و اون موارد رو با کامنت مشخص می‌کنیم.
 
 generator client {
   provider = "prisma-client-js"
@@ -14,10 +22,295 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model HealthCheck {
-  id        String   @id @default(uuid())
-  status    String   @default("ok")
-  checkedAt DateTime @default(now())
+// ============================================================
+// DOMAIN 1 — AUTH
+// ============================================================
 
-  @@map("health_checks")
+// چرا Role به‌عنوان جدول جداست (نه Enum داخل کد)؟
+// چون می‌خوایم ادمین بتونه از پنل مدیریتی نقش جدید اضافه کنه
+// بدون اینکه نیاز به تغییر کد و دیپلوی مجدد باشه.
+// permissions به‌صورت آرایه‌ی String ذخیره می‌شه — مثلاً ["video:upload", "user:ban"]
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique // "guest" | "user" | "admin" | "super_admin"
+  displayName String   @map("display_name")
+  permissions String[] // آرایه در PostgreSQL با نوع text[]
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  users User[]
+
+  @@map("roles")
+}
+
+// جدول اصلی کاربران.
+// نکته: پسورد ذخیره نمی‌کنیم — لاگین فقط با OTP (موبایل) است.
+// avatarKey به جای URL مستقیم: چون URL فایل‌های R2/S3 می‌تونه تغییر کنه،
+// ولی key (مسیر فایل) ثابته. URL رو runtime از key می‌سازیم.
+model User {
+  id          String    @id @default(uuid())
+  phone       String    @unique
+  name        String?
+  email       String?   @unique
+  avatarKey   String?   @map("avatar_key")  // کلید فایل در Object Storage
+  isActive    Boolean   @default(true) @map("is_active")
+  isVerified  Boolean   @default(false) @map("is_verified") // آیا موبایل تایید شده؟
+  roleId      String    @map("role_id")
+  role        Role      @relation(fields: [roleId], references: [id])
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  refreshTokens       RefreshToken[]
+  watchHistory        WatchHistory[]
+  bookmarks           Bookmark[]
+  consultations       ConsultationRequest[]
+  auditLogs           AuditLog[]
+
+  @@map("users")
+}
+
+// چرا OTP در جدول جداست؟
+// 1. OTPها موقتی‌اند — بعد از استفاده یا expiry حذف می‌شن
+// 2. یه موبایل ممکنه چند OTP فعال داشته باشه (resend)
+// 3. نگه داشتنشون در جدول user هم از نظر امنیتی و هم طراحی غلطه
+// type: "login" | "verify" | "reset" — برای اینکه بدونیم OTP برای چه منظوریه
+model OtpCode {
+  id        String   @id @default(uuid())
+  phone     String
+  code      String
+  type      String   @default("login") // login | verify
+  expiresAt DateTime @map("expires_at")
+  usedAt    DateTime? @map("used_at")  // وقتی استفاده شد ثبت می‌کنیم (نه حذف، برای لاگ)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([phone, type]) // چون همیشه با phone+type جستجو می‌کنیم
+  @@map("otp_codes")
+}
+
+// Refresh Token برای مدیریت session بلند مدت.
+// Access Token کوتاه‌مدته (15 دقیقه) و در حافظه نگه داشته می‌شه.
+// Refresh Token بلندمدته (30 روز) و اینجا ذخیره می‌شه تا بشه invalidate کرد
+// (مثلاً وقتی کاربر از همه‌ی دستگاه‌ها خارج می‌شه).
+model RefreshToken {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique @map("token_hash") // هش توکن، نه خود توکن — امنیت!
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceInfo String? @map("device_info") // User-Agent برای نمایش به کاربر
+  expiresAt DateTime @map("expires_at")
+  revokedAt DateTime? @map("revoked_at") // اگه invalidate شد
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// ============================================================
+// DOMAIN 2 — CONTENT
+// ============================================================
+
+// دسته‌بندی با پشتیبانی از درخت (Self-Referential).
+// parent_id null = دسته‌ی اصلی. parent_id پر = زیردسته.
+// مثال: "برنامه‌نویسی" > "جاوا اسکریپت" > "React"
+// slug برای URL استفاده می‌شه — /courses/programming/javascript
+model Category {
+  id          String     @id @default(uuid())
+  name        String
+  slug        String     @unique
+  description String?
+  imageKey    String?    @map("image_key")
+  parentId    String?    @map("parent_id")
+  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryTree")
+  order       Int        @default(0) // ترتیب نمایش
+  isActive    Boolean    @default(true) @map("is_active")
+  createdAt   DateTime   @default(now()) @map("created_at")
+
+  courses Course[]
+
+  @@map("categories")
+}
+
+// Course = دوره‌ی آموزشی.
+// یه دوره چند Section (فصل) داره و هر فصل چند Lesson (درس) داره.
+// این سلسله‌مراتب: Category > Course > Section > Lesson
+model Course {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  description String?
+  thumbnailKey String? @map("thumbnail_key")
+  categoryId  String   @map("category_id")
+  category    Category @relation(fields: [categoryId], references: [id])
+  level       String   @default("beginner") // beginner | intermediate | advanced
+  isPublished Boolean  @default(false) @map("is_published")
+  isFeatured  Boolean  @default(false) @map("is_featured")
+  order       Int      @default(0)
+  metaTitle   String?  @map("meta_title")   // برای SEO
+  metaDesc    String?  @map("meta_desc")    // برای SEO
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  sections Section[]
+
+  @@map("courses")
+}
+
+// Section = فصل داخل دوره.
+// چرا Section وجود داره؟ چون بدون اون نمی‌تونیم درس‌ها رو
+// به فصل‌های مجزا با عنوان و ترتیب مستقل تقسیم کنیم.
+model Section {
+  id        String   @id @default(uuid())
+  title     String
+  order     Int      @default(0) // ترتیب فصل داخل دوره
+  courseId  String   @map("course_id")
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  lessons Lesson[]
+
+  @@map("sections")
+}
+
+// Lesson = درس (یه ویدیو).
+// videoKey: مسیر فایل HLS در Object Storage (مثلاً "lessons/uuid/master.m3u8")
+// duration: طول ویدیو به ثانیه — برای نمایش "۱۲ دقیقه" در UI
+// isFree: بعضی درس‌ها رو می‌تونیم preview رایگان بذاریم
+model Lesson {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  videoKey    String?  @map("video_key")   // مسیر master.m3u8 در R2
+  thumbnailKey String? @map("thumbnail_key")
+  duration    Int?     @default(0)         // ثانیه
+  order       Int      @default(0)         // ترتیب درس داخل فصل
+  sectionId   String   @map("section_id")
+  section     Section  @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  isFree      Boolean  @default(false) @map("is_free")
+  isPublished Boolean  @default(false) @map("is_published")
+  metaTitle   String?  @map("meta_title")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  watchHistory WatchHistory[]
+  bookmarks    Bookmark[]
+
+  @@map("lessons")
+}
+
+// Media = کتابخانه‌ی رسانه.
+// هر فایلی که آپلود می‌شه (ویدیو، تصویر، سند) اینجا ثبت می‌شه.
+// این به ادمین اجازه می‌ده یه کتابخانه‌ی مرکزی از همه‌ی فایل‌ها داشته باشه.
+// uploadedById: کی آپلود کرده (برای ادمین پنل مهمه)
+model Media {
+  id           String   @id @default(uuid())
+  key          String   @unique  // مسیر فایل در Object Storage
+  bucket       String
+  originalName String   @map("original_name")
+  mimeType     String   @map("mime_type")
+  size         Int      // بایت
+  width        Int?     // برای تصاویر
+  height       Int?     // برای تصاویر
+  uploadedById String?  @map("uploaded_by_id") // ارتباط soft — ادمین ممکنه حذف بشه
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("media")
+}
+
+// ============================================================
+// DOMAIN 3 — ACTIVITY
+// ============================================================
+
+// تاریخچه‌ی تماشا.
+// progressSeconds: تا کجای ویدیو رفته (برای "ادامه تماشا")
+// completedAt: اگه ویدیو تا آخر دیده شد
+// @@unique: هر کاربر برای هر درس فقط یه رکورد داره — update می‌شه نه insert
+model WatchHistory {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId        String    @map("lesson_id")
+  lesson          Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  progressSeconds Int       @default(0) @map("progress_seconds")
+  completedAt     DateTime? @map("completed_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@unique([userId, lessonId]) // upsert به جای insert تکراری
+  @@index([userId])
+  @@map("watch_history")
+}
+
+// بوکمارک = ذخیره‌ی درس برای بعد.
+model Bookmark {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId  String   @map("lesson_id")
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, lessonId]) // هر درس یه بار بوکمارک می‌شه
+  @@map("bookmarks")
+}
+
+// درخواست مشاوره.
+// status: PENDING > IN_REVIEW > (APPROVED | REJECTED) > COMPLETED
+// adminNote: یادداشت ادمین برای خودشون (نه نمایش به کاربر)
+// responseMessage: پیامی که به کاربر نشون داده می‌شه
+model ConsultationRequest {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject         String
+  message         String
+  status          String    @default("PENDING")
+  // PENDING | IN_REVIEW | APPROVED | REJECTED | COMPLETED
+  adminNote       String?   @map("admin_note")
+  responseMessage String?   @map("response_message")
+  reviewedAt      DateTime? @map("reviewed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([status])
+  @@map("consultation_requests")
+}
+
+// لاگ حسابرسی (Audit Log).
+// برای هر عملیات مهم (تغییر نقش، حذف دوره، ...) یه رکورد ثبت می‌شه.
+// metadata: اطلاعات اضافی به‌صورت JSON — مثلاً قبل/بعد از تغییر
+// entityType + entityId: روی کدام موجودیت عمل انجام شد
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?  @map("user_id") // null اگه سیستم عمل انجام داده (نه کاربر)
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String   // "course.create" | "user.ban" | "role.update" ...
+  entityType String   @map("entity_type") // "Course" | "User" | "Lesson"
+  entityId   String   @map("entity_id")
+  metadata   Json?    // { before: {...}, after: {...} }
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// تنظیمات سیستمی — key/value store ساده برای ادمین پنل.
+// مثال: { key: "site_name", value: "Repoint Learn", group: "general" }
+//         { key: "otp_expire_minutes", value: "5", group: "auth" }
+// این باعث می‌شه ادمین بتونه تنظیمات رو بدون کد تغییر بده.
+model Setting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  group     String   @default("general") // general | auth | seo | notification
+  isPublic  Boolean  @default(false) @map("is_public") // آیا فرانت‌اند می‌تونه بخونه؟
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([group])
+  @@map("settings")
 }

@@ -1,24 +1,33 @@
-import type { Metadata } from "next";
-import "./globals.css";
-
-// نکته‌ی مهم: فونت گوگل (Geist) رو عمداً حذف کردیم.
-// در اسپرینت طراحی UI، فونت فارسی Vazirmatn رو خودمون self-host می‌کنیم
-// (یعنی فایل فونت روی سرور خودمون باشه نه گوگل) که هم سریع‌تره
-// هم به دیتای کاربر متصل به گوگل نمی‌شه و هم در شبکه‌های محدود هم کار می‌کنه.
+import type { Metadata } from 'next';
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: "Repoint Learn",
-  description: "پلتفرم آموزشی Repoint",
+  title: {
+    default: 'Repoint Learn — آموزش حرفه‌ای',
+    template: '%s | Repoint Learn',
+  },
+  description: 'پلتفرم آموزشی تخصصی Repoint — یادگیری حرفه‌ای با بهترین مدرسان',
+  keywords: ['آموزش', 'Repoint', 'یادگیری آنلاین'],
+  openGraph: {
+    locale: 'fa_IR',
+    type: 'website',
+  },
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="fa" dir="rtl" className="h-full antialiased">
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="fa" dir="rtl">
+      <head>
+        <link rel="preload" href="/fonts/Vazirmatn-Regular.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        <link rel="preload" href="/fonts/Vazirmatn-Bold.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+      </head>
+      <body className="min-h-screen flex flex-col">
+        {children}
+      </body>
     </html>
   );
 }
