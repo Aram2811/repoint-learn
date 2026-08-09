@@ -8,84 +8,92 @@ const NAV_LINKS = [
   { label: 'خانه', href: '/' },
   { label: 'آموزش‌ها', href: '/courses' },
   { label: 'ربات‌ها', href: '/#bots' },
-  { label: 'مشاوره', href: '/consultation' },
-  { label: 'سوالات', href: '/#faq' },
+  { label: 'درباره ما', href: '/about' },
 ];
 
 export default function Navbar() {
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-md border-b"
-      style={{ background: 'rgba(15,12,41,0.85)', borderColor: 'rgba(245,158,11,0.15)' }}>
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+    <nav
+      className="fixed top-0 w-full z-50 flex flex-row-reverse justify-between items-center px-6 md:px-12 h-20"
+      style={{
+        background: 'rgba(5,20,36,0.8)',
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)',
+        borderBottom: '1px solid rgba(255,255,255,0.1)',
+      }}
+    >
+      {/* لوگو */}
+      <Link href="/" className="flex items-center gap-2">
+        <span className="text-3xl" style={{ color: '#ffb68b' }}>🤖</span>
+        <span className="font-bold text-lg" style={{ color: '#ffb68b' }}>Repoint Bot</span>
+      </Link>
 
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm"
-              style={{ background: '#F59E0B', color: 'white' }}>R</div>
-            <span className="font-bold text-lg" style={{ color: 'white' }}>
-              Repoint <span style={{ color: '#F59E0B' }}>Learn</span>
-            </span>
-          </Link>
-
-          <div className="hidden md:flex items-center gap-8">
-            {NAV_LINKS.map((link) => (
-              <Link key={link.href} href={link.href}
-                className="text-sm font-medium transition-colors"
-                style={{ color: '#94A3B8' }}
-                onMouseEnter={e => (e.currentTarget.style.color = '#F59E0B')}
-                onMouseLeave={e => (e.currentTarget.style.color = '#94A3B8')}>
-                {link.label}
-              </Link>
-            ))}
-          </div>
-
-          <div className="hidden md:flex items-center gap-3">
-            <Link href="/auth/login"
-              className="text-sm font-semibold px-4 py-2 rounded-xl transition-all"
-              style={{ border: '1px solid rgba(245,158,11,0.4)', color: '#FCD34D' }}>
-              ورود
+      {/* لینک‌های دسکتاپ */}
+      <ul className="hidden md:flex items-center gap-8">
+        {NAV_LINKS.map((link) => (
+          <li key={link.href}>
+            <Link
+              href={link.href}
+              className="text-sm transition-colors duration-300"
+              style={{ color: '#e0c0af', fontWeight: 500 }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#ffb68b')}
+              onMouseLeave={e => (e.currentTarget.style.color = '#e0c0af')}
+            >
+              {link.label}
             </Link>
-            <Link href="/courses"
-              className="text-sm font-bold px-4 py-2 rounded-xl transition-all"
-              style={{ background: '#F59E0B', color: 'white' }}>
-              شروع رایگان
-            </Link>
-          </div>
+          </li>
+        ))}
+      </ul>
 
-          <button onClick={() => setMenuOpen(!menuOpen)}
-            className="md:hidden p-2 rounded-lg" style={{ color: '#94A3B8' }}>
-            <div className="w-6 h-5 flex flex-col justify-between">
-              <span className={`block h-0.5 bg-current transition-all ${menuOpen ? 'rotate-45 translate-y-2' : ''}`} />
-              <span className={`block h-0.5 bg-current transition-all ${menuOpen ? 'opacity-0' : ''}`} />
-              <span className={`block h-0.5 bg-current transition-all ${menuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
-            </div>
-          </button>
+      {/* CTA */}
+      <div className="hidden md:block">
+        <Link
+          href="/auth/login"
+          className="flex items-center gap-2 text-sm px-6 py-2 rounded-full transition-colors duration-300"
+          style={{
+            color: '#ffb68b',
+            background: 'rgba(18,33,49,0.8)',
+            border: '1px solid rgba(255,182,139,0.3)',
+          }}
+        >
+          ورود / ثبت‌نام
+        </Link>
+      </div>
+
+      {/* موبایل */}
+      <button onClick={() => setOpen(!open)} className="md:hidden p-2" style={{ color: '#e0c0af' }}>
+        <div className="w-6 h-5 flex flex-col justify-between">
+          <span className={`block h-0.5 bg-current transition-all ${open ? 'rotate-45 translate-y-2' : ''}`} />
+          <span className={`block h-0.5 bg-current ${open ? 'opacity-0' : ''}`} />
+          <span className={`block h-0.5 bg-current transition-all ${open ? '-rotate-45 -translate-y-2' : ''}`} />
         </div>
-      </nav>
+      </button>
 
       <AnimatePresence>
-        {menuOpen && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-            className="md:hidden border-t" style={{ borderColor: 'rgba(245,158,11,0.15)', background: 'rgba(15,12,41,0.98)' }}>
-            <div className="px-4 py-4 flex flex-col gap-4">
-              {NAV_LINKS.map((link) => (
-                <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)}
-                  className="py-2 font-medium" style={{ color: '#CBD5E1' }}>
-                  {link.label}
-                </Link>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="absolute top-20 left-0 right-0 md:hidden border-t"
+            style={{ background: 'rgba(5,20,36,0.98)', borderColor: 'rgba(255,255,255,0.1)' }}
+          >
+            <div className="flex flex-col px-6 py-4 gap-4">
+              {NAV_LINKS.map(link => (
+                <Link key={link.href} href={link.href} onClick={() => setOpen(false)}
+                  className="py-2 text-sm" style={{ color: '#d4e4fa' }}>{link.label}</Link>
               ))}
-              <div className="flex flex-col gap-2 pt-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-                <Link href="/auth/login" className="text-center py-3 rounded-xl font-semibold"
-                  style={{ border: '1px solid rgba(245,158,11,0.4)', color: '#FCD34D' }}>ورود</Link>
-                <Link href="/courses" className="text-center py-3 rounded-xl font-bold"
-                  style={{ background: '#F59E0B', color: 'white' }}>شروع رایگان</Link>
-              </div>
+              <Link href="/auth/login"
+                className="text-center py-3 rounded-full text-sm"
+                style={{ border: '1px solid rgba(255,182,139,0.3)', color: '#ffb68b' }}>
+                ورود / ثبت‌نام
+              </Link>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </header>
+    </nav>
   );
 }
