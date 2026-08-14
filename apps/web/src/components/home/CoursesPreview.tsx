@@ -9,28 +9,28 @@ const COURSES = [
     catColor: '#ffb68b',
     title: 'راه‌اندازی کامل ربات Repoint از صفر',
     duration: '۳ ساعت',
-    icon: '🤖',
+    icon: ' ',
   },
   {
     cat: 'Trust Wallet',
     catColor: '#d0bcff',
     title: 'نصب و تنظیم کیف پول و شبکه Polygon',
     duration: '۴۵ دقیقه',
-    icon: '👛',
+    icon: ' ',
   },
   {
     cat: 'مدیریت سرمایه',
     catColor: '#bec6e0',
     title: 'انتخاب ربات مناسب بر اساس سرمایه',
     duration: '۱ ساعت',
-    icon: '📊',
+    icon: ' ',
   },
   {
     cat: 'درآمد از معرف',
     catColor: '#10B981',
     title: 'سیستم رفرال و استخر روزانه Repoint',
     duration: '۱ ساعت',
-    icon: '🤝',
+    icon: ' ',
   },
 ];
 

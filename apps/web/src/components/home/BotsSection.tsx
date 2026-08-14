@@ -91,7 +91,7 @@ export default function BotsSection() {
             {bot.popular && (
               <div className="absolute -top-3 right-4 px-3 py-1 rounded text-xs font-bold"
                 style={{ background: 'linear-gradient(to right, #ffb68b, #cc6600)', color: '#2a1000', fontFamily: 'monospace' }}>
-                ⭐ محبوب‌ترین
+                 محبوب‌ترین
               </div>
             )}
 
@@ -145,7 +145,7 @@ export default function BotsSection() {
         style={{ background: 'rgba(255,182,139,0.04)', border: '1px solid rgba(255,182,139,0.12)', color: '#6b8099' }}
       >
         ۹۵٪ از مبالغ واریزی به قرارداد هوشمند متعلق به کاربران است · اشتراک مادام‌العمر با ۱۰۰ دلار POL ·
-        قرارداد قابل استعلام روی Polygonscan · ⚠️ سرمایه‌گذاری در کریپتو ریسک دارد
+        قرارداد قابل استعلام روی Polygonscan ·  سرمایه‌گذاری در کریپتو ریسک دارد
       </motion.div>
     </section>
   );

@@ -55,14 +55,14 @@ void main() {
     vec3 color = vec3(0.02, 0.08, 0.14);
     
     // grid کوچک‌تر = ذرات کمتر و خلوت‌تر (20 به جای 40)
-    vec2 g_uv = uv * 20.0;
+    vec2 g_uv = uv * 40.0;
     vec2 id = floor(g_uv);
     vec2 f_uv = fract(g_uv) - 0.5;
     
     float h = hash(id);
     
     // فقط ۳۰٪ از ذرات نمایش داده بشن (خلوت‌تر)
-    if (h > 0.3) {
+    if (h > 0.6) {
       gl_FragColor = vec4(color, 1.0);
       return;
     }

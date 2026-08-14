@@ -85,7 +85,7 @@ export default function HeroSection() {
           onMouseEnter={e => (e.currentTarget.style.background = 'rgba(208,188,255,0.1)')}
           onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
         >
-          مشاهده ربات‌ها 🤖
+          مشاهده ربات‌ها  
         </Link>
       </motion.div>
 

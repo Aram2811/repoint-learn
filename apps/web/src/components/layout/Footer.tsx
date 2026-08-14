@@ -8,7 +8,7 @@ export default function Footer() {
       <div className="max-w-screen-xl mx-auto px-4 md:px-12 py-10 flex flex-col md:flex-row-reverse justify-between items-center gap-6">
 
         <div className="flex items-center gap-2">
-          <span style={{ color: '#ffb68b' }}>🤖</span>
+          <span style={{ color: '#ffb68b' }}> </span>
           <span className="font-bold text-lg" style={{ color: '#ffb68b' }}>Repoint Bot</span>
         </div>
 
@@ -33,7 +33,7 @@ export default function Footer() {
         </ul>
 
         <div className="text-xs text-center" style={{ color: '#3d5166' }}>
-          © ۱۴۰۴ — ⚠️ سرمایه‌گذاری در کریپتو ریسک دارد
+          © ۱۴۰۴ —   سرمایه‌گذاری در کریپتو ریسک دارد
         </div>
       </div>
     </footer>

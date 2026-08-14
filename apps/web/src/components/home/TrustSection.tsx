@@ -3,10 +3,10 @@
 import { motion } from 'framer-motion';
 
 const ITEMS = [
-  { icon: '⛓️', label: 'قرارداد هوشمند روی Polygon' },
-  { icon: '🔍', label: 'شفاف روی Polygonscan' },
-  { icon: '🔐', label: 'سرمایه در کیف پول خودت' },
-  { icon: '⚡', label: 'ترید خودکار ۲۴/۷' },
+  { icon: ' ', label: 'قرارداد هوشمند روی Polygon' },
+  { icon: ' ', label: 'شفاف روی Polygonscan' },
+  { icon: ' ', label: 'سرمایه در کیف پول خودت' },
+  { icon: ' ', label: 'ترید خودکار ۲۴/۷' },
 ];
 
 export default function TrustSection() {

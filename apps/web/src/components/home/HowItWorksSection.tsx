@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 const STEPS = [
   {
     number: '۱',
-    icon: '📱',
+    icon: ' ',
     title: 'Trust Wallet نصب کن',
     desc: 'اپ Trust Wallet رو دانلود کن، کیف پول جدید بساز و شبکه Polygon (POL) رو فعال کن.',
     color: '#3B82F6',
@@ -13,7 +13,7 @@ const STEPS = [
   },
   {
     number: '۲',
-    icon: '💰',
+    icon: ' ',
     title: 'POL تهیه کن',
     desc: 'معادل ۱۰۰ دلار ارز POL از صرافی‌های معتبر بخر و به کیف پول Trust Wallet انتقال بده.',
     color: '#10B981',
@@ -21,7 +21,7 @@ const STEPS = [
   },
   {
     number: '۳',
-    icon: '🤝',
+    icon: ' ',
     title: 'با کد معرف ثبت‌نام کن',
     desc: 'وارد پلتفرم Repoint بشو، کیف پول رو وصل کن و اشتراک مادام‌العمر رو فعال کن.',
     color: '#ffb68b',
@@ -29,7 +29,7 @@ const STEPS = [
   },
   {
     number: '۴',
-    icon: '🤖',
+    icon: ' ',
     title: 'ربات رو انتخاب کن',
     desc: 'بسته به سرمایه و هدفت Ruby، Topaz یا Garnet رو انتخاب کن. ربات همین الان شروع می‌کنه.',
     color: '#d0bcff',
