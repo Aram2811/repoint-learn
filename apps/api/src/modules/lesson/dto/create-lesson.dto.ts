@@ -1,4 +1,7 @@
-import { IsString, IsOptional, IsBoolean, IsInt, MinLength, MaxLength } from 'class-validator';
+import {
+  IsString, IsOptional, IsBoolean,
+  IsInt, IsIn, MinLength, MaxLength, IsUrl,
+} from 'class-validator';
 
 export class CreateLessonDto {
   @IsString()
@@ -13,13 +16,23 @@ export class CreateLessonDto {
   @IsString()
   description?: string;
 
+  // لینک ویدیو از YouTube, Aparat, Vimeo یا هر پلتفرم دیگه
   @IsOptional()
-  @IsString()
-  videoKey?: string;
+  @IsUrl({}, { message: 'آدرس ویدیو باید یک URL معتبر باشد' })
+  videoUrl?: string;
 
   @IsOptional()
+  @IsIn(['youtube', 'aparat', 'vimeo', 'direct'])
+  videoType?: string;
+
+  // thumbnail — لینک یا key فایل آپلودشده
+  @IsOptional()
   @IsString()
-  thumbnailKey?: string;
+  thumbnailKey?: string; // کلید فایل آپلودشده در storage
+
+  @IsOptional()
+  @IsUrl({}, { message: 'آدرس تصویر باید یک URL معتبر باشد' })
+  thumbnailUrl?: string; // لینک تصویر خارجی
 
   @IsOptional()
   @IsInt()
